@@ -2,6 +2,7 @@ const User = require("../models/User");
 
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const mongoose = require("mongoose");
 
 const jwtSecret = process.env.JWT_SECRET;
 
@@ -84,8 +85,70 @@ const getCurrentUSer = async (req, res) =>{
     res.status(200).json(user);
 }
 
+//Update a User
+const update = async (req, res) =>{
+    
+    const {name, password, bio} = req.body;
+
+    let profileImage = null;
+
+    if(req.file){
+        profileImage = req.file.filename
+    }
+
+    const reqUSer = req.user;
+
+    const user = await User.findById(mongoose.Types.ObjectId(reqUSer._id)).select("-password");
+
+    if(name){
+        user.name = name;
+    }
+
+    if(password){
+         //Generate password hash
+        const salt = await bcrypt.genSalt();
+        const passwordHash =  await bcrypt.hash(password,salt);
+        user.password = passwordHash;
+    }
+
+    if(profileImage){
+        user.profileImage = profileImage;
+    }
+
+    if(bio){
+        user.bio = bio;
+    }
+
+    await user.save();
+
+    res.status(200).json({user});
+};
+
+//Get user by id
+const getUserById = async (req, res) =>{
+
+    const {id} = req.params;
+
+    try {
+        const user = await User.findById(mongoose.Types.ObjectId(id)).select("-password");
+        if(!user){
+            res.status(404).json({errors:["Usuario naõ encontrado!"]});
+            return;
+        }
+    
+        res.status(200).json({user});
+
+    } catch (error) {
+        res.status(404).json({errors:["Usuario naõ encontrado!"]});
+    }
+
+    }
+
+
 module.exports = {
     register,
     login,
-    getCurrentUSer
+    getCurrentUSer,
+    update,
+    getUserById
 };
