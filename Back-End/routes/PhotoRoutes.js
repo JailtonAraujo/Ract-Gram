@@ -7,10 +7,19 @@ const {
     deletePhoto, 
     getAllPhotos,
     getAllPhotosByUseId,
+    getPhotoById,
+    updatePhoto,
+    likePhoto,
+    commentPhoto,
+    searcPhotoByTitle,
 } = require("../controller/PhotoController");
 
 //Middleswares
-const {photoInsertValidation} = require("../middlewares/photoValidation");
+const {
+    photoInsertValidation,
+    photoUpdateValidation,
+    commentValidator,
+} = require("../middlewares/photoValidation");
 const authGuard = require("../middlewares/AuthGuard");
 const validate = require("../middlewares/handlerValidator");
 const {imageUpload} = require("../middlewares/imageUpload");
@@ -28,5 +37,15 @@ router.delete("/:id", authGuard,deletePhoto);
 router.get("/",authGuard,getAllPhotos);
 
 router.get("/user",authGuard,getAllPhotosByUseId);
+
+router.get("/search", authGuard, searcPhotoByTitle);
+
+router.get("/:id",authGuard,getPhotoById);
+
+router.put("/:id",authGuard,photoUpdateValidation(),validate,updatePhoto);
+
+router.put("/like/:id", authGuard,likePhoto);
+
+router.put("/comment/:id",authGuard,commentValidator(),validate,commentPhoto);
 
 module.exports = router;
