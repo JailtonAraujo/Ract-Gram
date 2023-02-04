@@ -60,12 +60,14 @@ export const  deletePhoto = createAsyncThunk (
 )
 
 // update a photo
-const updatePhoto = createAsyncThunk(
+export const updatePhoto = createAsyncThunk(
     "photo/update",
-    async(id, photo, thunkApi)=>{
+    async(photo, thunkApi)=>{
         const token = thunkApi.getState().auth.user.token;
 
-        const data = photoService.updatePhoto(id, photo, token);
+        //console.log(photo)
+
+        const data = await photoService.updatePhoto({title:photo.title},  photo.id ,token);
 
         if(data.error){
             return thunkApi.rejectWithValue(data.erros[0])
@@ -75,14 +77,45 @@ const updatePhoto = createAsyncThunk(
     }
 )
 
+//get photo by ID
+export const getPhotoById = createAsyncThunk(
+    "photo/id",
+    async(id, thunkApi)=>{
+        const token = thunkApi.getState().auth.user.token;
+
+        const data = await photoService.getPhotoById(id,token);
+
+        return data;
+    }
+)
+
+//Like a photo
+export const likePhoto = createAsyncThunk(
+    "photo/like",
+    async(id, thunkApi)=>{
+
+        const token = thunkApi.getState().auth.user.token;
+
+        const data = await photoService.photoLike(id,token);
+
+        if(data.errors){
+            return thunkApi.rejectWithValue(data.errors[0]);
+        }
+
+        return data;
+
+    }
+)
+
 export const photoSlice = createSlice({
     name:"photo",
     initialState,
 
     reducers:{
+
         resetMessage : (state)=>{
             state.message = null;
-        }
+        },
     },
 
     extraReducers: (builder)=>{
@@ -128,6 +161,64 @@ export const photoSlice = createSlice({
             state.loading = false;
             state.error = action.payload;
             state.photo = {};
+        })
+
+        .addCase(updatePhoto.pending,(state)=>{
+            state.loading = true;
+            state.error = false;
+        }).addCase(updatePhoto.fulfilled,(state,action)=>{
+            state.loading = false;
+            state.success = true;
+            state.error = null;
+            state.message = "Photo atualizada com sucesso!"
+            state.photos.map((photo)=>{
+                if(photo._id === action.payload.photo._id){
+                    return (photo.title = action.payload.photo.title)
+                }
+                return photo;
+            })
+        }).addCase(updatePhoto.rejected,(state,action)=>{
+            state.loading = false;
+            state.error = action.payload;
+            state.photo = {};
+            state.message = null;
+        })
+
+        .addCase(getPhotoById.pending,(state)=>{
+            state.loading = true;
+            state.error = false;
+        }).addCase(getPhotoById.fulfilled,(state,action)=>{
+            state.loading = false;
+            state.success = true;
+            state.error = null;
+            state.photo = action.payload
+        })
+
+        
+        .addCase(likePhoto.pending,(state)=>{
+            state.loading = true;
+            state.error = false;
+        }).addCase(likePhoto.fulfilled,(state,action)=>{
+            state.loading = false;
+            state.success = true;
+            state.error = null;
+
+            if(state.photo.likes){
+                state.photo.likes.push(action.payload.userId)
+            }
+
+            state.photos.map((photo)=>{
+                if(photo._id === action.payload.photoId){
+                    return photo.likes.push(action.payload.userId);
+                }
+                return photo;
+            })
+
+            state.message = action.payload.message
+        }).addCase(likePhoto.rejected,(state,action)=>{
+            state.loading = false;
+            state.error = action.payload;
+
         })
     }
     

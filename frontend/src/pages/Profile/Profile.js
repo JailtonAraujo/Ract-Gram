@@ -14,12 +14,28 @@ import { useParams } from 'react-router-dom';
 
 //redux
 import { getUserDatils } from '../../slices/useSlice';
-import { publishPhoto, resetMessage, getUserPhotos, deletePhoto } from '../../slices/photoSlice';
+import { 
+    publishPhoto, 
+    resetMessage, 
+    getUserPhotos, 
+    deletePhoto,
+    updatePhoto
+} from '../../slices/photoSlice';
 
 
 const Profile = () => {
 
     const dispath = useDispatch();
+
+     //resete mensage
+     const resetComponentMessage = () =>{
+
+        setTimeout(()=>{
+            dispath(resetMessage())
+        }, 2000)
+
+    }
+
 
     const {id} = useParams();
 
@@ -36,16 +52,12 @@ const Profile = () => {
     const [title, setTitle] = useState("");
     const [image, setImage] = useState("");
 
+    const [editId, setEditId] = useState("");
+    const [editImage, setEditImage] = useState("");
+    const [editTitle, setEditTitle] = useState("");
 
-    //resete mensage
-    const resetComponentMessage = () =>{
 
-        setTimeout(()=>{
-            resetMessage();
-        },2000)
-
-    }
-
+   
 
     //new fomr and edit form refs
     const newPhotoForm = useRef();
@@ -91,8 +103,42 @@ const Profile = () => {
     // delete a photo
     const handlerDelete = (id) =>{
         dispath(deletePhoto(id))
-        
+
         resetComponentMessage()
+    }
+
+    //Dhow or hide forms
+    const hideOrShowForms = () =>{
+        newPhotoForm.current.classList.toggle("hide");
+        editPhotoForm.current.classList.toggle("hide")
+    }
+
+    //update a photo
+    const handlerUpdate = (e) =>{
+        e.preventDefault();
+
+        const editPhoto ={
+            title:editTitle,
+            id: editId
+        }
+
+        dispath(updatePhoto(editPhoto));
+
+        resetComponentMessage();
+    }
+
+    const handlerEdit = (photo)=>{
+        if(editPhotoForm.current.classList.contains("hide")){
+            hideOrShowForms()
+        }
+
+        setEditId(photo._id);
+        setEditTitle(photo.title);
+        setEditImage(photo.image)
+    }
+
+    const handlerCancelEdit = (e) =>{
+        hideOrShowForms();
     }
 
     if(loading){
@@ -115,6 +161,7 @@ const Profile = () => {
 
 
         {id === userAuth._id && (
+            <>
             <div className='new-photo' ref={newPhotoForm}>
                 <h3>Compartilhe algum momento seu:</h3>
                 <form onSubmit={handlerSubmit}>
@@ -133,6 +180,28 @@ const Profile = () => {
                     {loadingPhoto && <input type="submit" disabled value="Aguarde..."/>}
                 </form>
             </div>
+
+            <div className="edit-photo hide" ref={editPhotoForm}>
+                <p>Editando:</p>
+                {editImage && (
+                    <img src={`${uploads}/photos/${editImage}`} alt={editTitle} />
+                )}
+                <form onSubmit={handlerUpdate}>
+
+                        <input 
+                        type="text" 
+                        placeholder='Insira um titulo' 
+                        onChange={(e)=> setEditTitle(e.target.value)} 
+                        value={editTitle || ""}/>
+                    
+                   
+                    <input type="submit" value="Atualizar"/>
+                    <button className='cancel-btn' onClick={handlerCancelEdit}>Cancelar edição</button>
+                   
+                </form>
+            </div>
+
+            </>
         )}
         {errorPhoto && <Message msg={errorPhoto} type="error"/>}
         {messagePhoto && <Message msg={messagePhoto} type="success"/>}
@@ -147,10 +216,10 @@ const Profile = () => {
                        
                         {id === userAuth._id ? (
                         <div className='actions'>
-                            <Link to={`/photos/${photo._id}`}>
+                            <Link to={`/photo/${photo._id}`}>
                                 <BsFillEyeFill/>
                             </Link>
-                            <BsPencilFill/>
+                            <BsPencilFill onClick={()=>handlerEdit(photo)}/>
                             <BsXLg onClick={()=> handlerDelete(photo._id) }/>
                         </div>
                         ) : (
