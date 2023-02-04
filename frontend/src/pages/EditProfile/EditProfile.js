@@ -19,8 +19,6 @@ const EditProfile = () => {
 
     const {user, message, error, loading} = useSelector((state)=>state.user)
 
-    console.log(user);
-
     //states
     const[name, setName] = useState("");
     const[email, setEmail] = useState("");

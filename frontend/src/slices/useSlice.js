@@ -37,6 +37,14 @@ export const updateProfile = createAsyncThunk("user/update",
     }
 )
 
+export const getUserDatils = createAsyncThunk(
+    "user/get",
+    async (id, thunkAPI) =>{
+        const data = await userService.getUserDetails(id);
+        return data;
+    }
+)
+
 //functions
 
 export const userSlice = createSlice({
@@ -49,7 +57,8 @@ export const userSlice = createSlice({
     },
 
     extraReducers: (builder) =>{
-        builder.addCase(profile.pending,(state)=>{
+        builder.
+        addCase(profile.pending,(state)=>{
             state.loading = true;
             state.error = false;
         }).addCase(profile.fulfilled,(state,action)=>{
@@ -75,9 +84,19 @@ export const userSlice = createSlice({
         }).addCase(updateProfile.rejected,(state,action)=>{
             state.loading = false;
             state.error = action.payload;
-            console.log(action.payload);
             state.user = {};
         })
+
+        .addCase(getUserDatils.pending,(state)=>{
+            state.loading = true;
+            state.error = false;
+        }).addCase(getUserDatils.fulfilled,(state,action)=>{
+            state.error = null;
+            state.success = true;
+            state.loading = false;
+            state.user = action.payload.user;
+        })
+        
     }
 
 });
